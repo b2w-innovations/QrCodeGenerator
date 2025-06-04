@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>QR Code with Vector Spaces & Background Colour</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+    .controls {
+      display: grid;
+      /* we have now 7 controls, so 2 columns still works */
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    label {
+      font-weight: bold;
+      color: #333;
+    }
+    input, select {
+      padding: 10px;
+      border: 2px solid #ddd;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+    input:focus, select:focus {
+      outline: none;
+      border-color: #4CAF50;
+    }
+    button {
+      background: #4CAF50;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: bold;
+      grid-column: span 2;
+      transition: background 0.3s;
+    }
+    button:hover {
+      background: #45a049;
+    }
+    .qr-container {
+      display: flex;
+      justify-content: center;
+      margin: 30px 0;
+      padding: 20px;
+      background: #fafafa;
+      border-radius: 8px;
+    }
+    .download-section {
+      text-align: center;
+      margin-top: 20px;
+    }
+    .download-btn {
+      background: #2196F3;
+      margin: 0 10px;
+    }
+    .download-btn:hover {
+      background: #1976D2;
+    }
+    .instructions {
+      background: #e8f5e8;
+      padding: 20px;
+      border-radius: 8px;
+      margin-top: 20px;
+    }
+    .instructions h3 {
+      margin-top: 0;
+      color: #2e7d32;
+    }
+    .space-indicator {
+      fill: #ffeb3b;
+      opacity: 0.7;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>QR Code with Vector Image Spaces &amp; Background Color</h1>
+
+    <div class="controls">
+      <div class="control-group">
+        <label for="urlInput">URL:</label>
+        <input
+          type="url"
+          id="urlInput"
+          placeholder="Enter URL"
+        />
+      </div>
+
+      <div class="control-group">
+        <label for="sizeSelect">QR Size:</label>
+        <select id="sizeSelect">
+          <option value="200">Small (200px)</option>
+          <option value="300" selected>Medium (300px)</option>
+          <option value="400">Large (400px)</option>
+          <option value="500">Extra Large (500px)</option>
+        </select>
+      </div>
+
+      <div class="control-group">
+        <label for="spaceSize">Vector Space Size:</label>
+        <select id="spaceSize">
+          <option value="small">Small (3×3 modules)</option>
+          <option value="medium" selected>Medium (5×5 modules)</option>
+          <option value="large">Large (7×7 modules)</option>
+        </select>
+      </div>
+
+      <div class="control-group">
+        <label for="spacePosition">Space Position:</label>
+        <select id="spacePosition">
+          <option value="center" selected>Center</option>
+          <option value="bottom-right">Bottom Right</option>
+          <option value="top-left">Top Left</option>
+          <option value="multiple">Multiple Spaces</option>
+        </select>
+      </div>
+
+      <div class="control-group">
+        <label for="moduleStyle">Module Style:</label>
+        <select id="moduleStyle">
+          <option value="square" selected>Square</option>
+          <option value="rounded">Rounded</option>
+          <option value="circular">Circular</option>
+          <option value="diamond">Diamond</option>
+        </select>
+      </div>
+
+      <div class="control-group">
+        <label for="gradientStyle">Gradient:</label>
+        <select id="gradientStyle">
+          <option value="none" selected>None</option>
+          <option value="linear">Linear Green</option>
+          <option value="radial">Radial Green</option>
+          <option value="rainbow">Rainbow</option>
+        </select>
+      </div>
+
+      <!-- NEW: Background colour picker -->
+      <div class="control-group">
+        <label for="bgColor">Background Colour:</label>
+        <input type="color" id="bgColor" value="#ffffff" />
+      </div>
+
+      <button onclick="generateQR()">Generate QR Code</button>
+    </div>
+
+    <div class="qr-container" id="qrContainer">
+      <p>Click “Generate QR Code” to create your custom QR code</p>
+    </div>
+
+    <div class="download-section" id="downloadSection" style="display: none;">
+      <button class="download-btn" onclick="copyImageToClipboard()">
+        Copy Image to Clipboard
+      </button>
+    </div>
+
+    <div class="instructions">
+      <h3>How to Add Your Vector Images:</h3>
+      <p>
+        <strong>Copy/Paste:</strong> Paste the copied QR code into
+		powerpoint or similar and paste your image into the white space.
+        Select bothteh QR code and the image at the same time, right click
+		and select "Save as picture..."
+      </p>
+      <p>
+        <strong>Positioning Guide:</strong> The coordinate system starts at
+        (0,0) in the top-left. Each QR module is typically 10×10 units in the
+        SVG.
+      </p>
+      <p>
+        <strong>Testing:</strong> Always test your final QR code with multiple
+        scanners to ensure the vector additions don’t break functionality.
+      </p>
+    </div>
+  </div>
+
+  <script>
+    let currentQRSVG = "";
+
+    function generateQR() {
+      const url = document.getElementById("urlInput").value;
+      const size = parseInt(document.getElementById("sizeSelect").value);
+      const spaceSize = document.getElementById("spaceSize").value;
+      const spacePosition = document.getElementById("spacePosition").value;
+      const moduleStyle = document.getElementById("moduleStyle").value;
+      const gradientStyle = document.getElementById("gradientStyle").value;
+      const bgColor = document.getElementById("bgColor").value;
+
+      if (!url) {
+        alert("Please enter a URL");
+        return;
+      }
+
+      try {
+        // 1) Create QR with medium correction level (“M”)
+        const qr = qrcode(0, "M");
+        qr.addData(url);
+        qr.make();
+
+        const moduleCount = qr.getModuleCount(); // e.g., 21, 25, 29…
+        const moduleSize = size / moduleCount; // pixel size per module
+
+        // 2) Start assembling SVG string
+        let svg =
+          `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg">`;
+
+        // 3) Define <defs> (gradients if needed)
+        svg += `<defs>`;
+        if (gradientStyle === "linear") {
+          svg += `<linearGradient id="qrGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%"   style="stop-color:#00DD51;stop-opacity:1" />
+              <stop offset="100%" style="stop-color:#00AA40;stop-opacity:1" />
+            </linearGradient>`;
+        } else if (gradientStyle === "radial") {
+          svg += `<radialGradient id="qrGradient" cx="50%" cy="50%" r="50%">
+              <stop offset="0%"   style="stop-color:#00FF60;stop-opacity:1" />
+              <stop offset="100%" style="stop-color:#00AA40;stop-opacity:1" />
+            </radialGradient>`;
+        } else if (gradientStyle === "rainbow") {
+          svg += `<linearGradient id="qrGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%"   style="stop-color:#FF6B6B;stop-opacity:1" />
+              <stop offset="25%"  style="stop-color:#4ECDC4;stop-opacity:1" />
+              <stop offset="50%"  style="stop-color:#45B7D1;stop-opacity:1" />
+              <stop offset="75%"  style="stop-color:#96CEB4;stop-opacity:1" />
+              <stop offset="100%" style="stop-color:#FECA57;stop-opacity:1" />
+            </linearGradient>`;
+        }
+        svg += `</defs>`;
+
+        // 4) Draw the background rect using the chosen colour
+        svg += `<rect width="${size}" height="${size}" fill="${bgColor}" />`;
+
+        // 5) Calculate central “blank space” size and position(s)
+        const spaceParams = getSpaceParameters(spaceSize, moduleCount);
+        const spacePositions = getSpacePositions(
+          spacePosition,
+          moduleCount,
+          spaceParams.size
+        );
+
+        // 6) Decide black‐module fill (solid or gradient)
+        const fillColor =
+          gradientStyle === "none" ? "#00DD51" : "url(#qrGradient)";
+
+        // 7) Loop through all QR modules; draw only the “dark” ones that are not in a blank‐space
+        for (let row = 0; row < moduleCount; row++) {
+          for (let col = 0; col < moduleCount; col++) {
+            const isDark = qr.isDark(row, col);
+            const isInSpace = isInVectorSpace(
+              row,
+              col,
+              spacePositions,
+              spaceParams.size
+            );
+
+            if (isDark && !isInSpace) {
+              const x = col * moduleSize;
+              const y = row * moduleSize;
+
+              switch (moduleStyle) {
+                case "rounded": {
+                  const radius = moduleSize * 0.3;
+                  svg += `<rect x="${x}" y="${y}" width="${moduleSize}" height="${moduleSize}" rx="${radius}" ry="${radius}" fill="${fillColor}" />`;
+                  break;
+                }
+                case "circular": {
+                  const centerX = x + moduleSize / 2;
+                  const centerY = y + moduleSize / 2;
+                  const circleRadius = moduleSize * 0.4;
+                  svg += `<circle cx="${centerX}" cy="${centerY}" r="${circleRadius}" fill="${fillColor}" />`;
+                  break;
+                }
+                case "diamond": {
+                  const centerXD = x + moduleSize / 2;
+                  const centerYD = y + moduleSize / 2;
+                  const halfSize = moduleSize * 0.4;
+                  svg += `<polygon points="${centerXD},${centerYD - halfSize} ${centerXD + halfSize},${centerYD} ${centerXD},${centerYD + halfSize} ${centerXD - halfSize},${centerYD}" fill="${fillColor}" />`;
+                  break;
+                }
+                default: {
+                  // square
+                  svg += `<rect x="${x}" y="${y}" width="${moduleSize}" height="${moduleSize}" fill="${fillColor}" />`;
+                }
+              }
+            }
+          }
+        }
+
+        // 8) Close SVG tag
+        svg += `</svg>`;
+
+        // 9) Render into the page
+        currentQRSVG = svg;
+        document.getElementById("qrContainer").innerHTML = svg;
+        document.getElementById("downloadSection").style.display = "block";
+      } catch (err) {
+        alert("Error generating QR code: " + err.message);
+      }
+    }
+
+    function getSpaceParameters(spaceSize, moduleCount) {
+      // Small: 3×3 or 10% of modules, whichever is bigger
+      // Medium: 5×5 or 15% of modules
+      // Large: 7×7 or 20% of modules
+      const sizes = {
+        small: Math.max(3, Math.floor(moduleCount * 0.10)),
+        medium: Math.max(5, Math.floor(moduleCount * 0.15)),
+        large: Math.max(7, Math.floor(moduleCount * 0.20)),
+      };
+      return { size: sizes[spaceSize] };
+    }
+
+    function getSpacePositions(position, moduleCount, spaceSize) {
+      const center = Math.floor(moduleCount / 2) - Math.floor(spaceSize / 2);
+      const positions = [];
+
+      switch (position) {
+        case "center":
+          positions.push({ row: center, col: center });
+          break;
+        case "bottom-right":
+          positions.push({
+            row: moduleCount - spaceSize - 2,
+            col: moduleCount - spaceSize - 2,
+          });
+          break;
+        case "top-left":
+          positions.push({ row: 10, col: 10 }); // avoid finder patterns
+          break;
+        case "multiple":
+          positions.push({ row: center, col: center });
+          positions.push({
+            row: moduleCount - spaceSize - 3,
+            col: moduleCount - spaceSize - 3,
+          });
+          break;
+      }
+
+      return positions;
+    }
+
+    function isInVectorSpace(row, col, spacePositions, spaceSize) {
+      return spacePositions.some(
+        (pos) =>
+          row >= pos.row &&
+          row < pos.row + spaceSize &&
+          col >= pos.col &&
+          col < pos.col + spaceSize
+      );
+    }
+
+    async function copyImageToClipboard() {
+      if (!currentQRSVG) return;
+
+      try {
+        const canvas = document.createElement("canvas");
+        const size = parseInt(document.getElementById("sizeSelect").value);
+        canvas.width = size;
+        canvas.height = size;
+
+        const ctx = canvas.getContext("2d");
+        const img = new Image();
+
+        img.onload = async function () {
+          ctx.drawImage(img, 0, 0);
+
+          canvas.toBlob(async (blob) => {
+            try {
+              await navigator.clipboard.write([
+                new ClipboardItem({ "image/png": blob }),
+              ]);
+              alert("QR code copied to clipboard!");
+            } catch (err) {
+              alert("Copy failed. Right-click to save manually.");
+            }
+          });
+        };
+
+        const svgBlob = new Blob([currentQRSVG], { type: "image/svg+xml" });
+        img.src = URL.createObjectURL(svgBlob);
+      } catch (err) {
+        alert("Copy failed. Right-click to save manually.");
+      }
+    }
+
+    // Generate one on page load
+    generateQR();
+  </script>
+</body>
+</html>
